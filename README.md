@@ -98,3 +98,4 @@ This project is licensed under the **[MIT license](https://github.com/ot2i7ba/UF
 
 ## Disclaimer
 This project is provided without warranties. Users are advised to review the accompanying license for more information on the terms of use and limitations of liability.
+
