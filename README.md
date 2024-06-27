@@ -51,7 +51,7 @@ UFEDMapper is a Python script designed to process and analyze KML files exported
 - **Plotting Engine**: Choose the plotting engine - Plotly (default) or Folium.
 - **Plot Type**: Select the type of plot you wish to create. You can choose a specific plot type or generate all available plots.
 
-**Plot Types**
+### Plot Types
 The user can choose between the Plotly and Folium plotting libraries. The following plot types are available:
 - Scatter Plot
 - Heatmap
@@ -76,11 +76,18 @@ A. All
 Enter the number of the plot type (default is 1): 1
 ```
 
-## Important Places
-You can define important places in the script that will be highlighted in the visualizations:
+### Important Places
+You can define important places in the script that will be highlighted in the visualizations. These places should match the names of the locations in your KML file exactly. For example, if your KML file contains the following locations:
+
+- "Home"
+- "Office"
+- "Gym"
+- "Supermarket"
+
+And you want to highlight "Home" and "Office", you would configure the important places as follows:
 
    ```python
-   important_places = ['Important Place 1', 'Important Place 2']
+   important_places = ['Home', 'Office']
    ```
 
 ## Logging
