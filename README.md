@@ -92,3 +92,9 @@ And you want to highlight "Home" and "Office", you would configure the important
 
 ## Logging
 The log file UFEDMapper.log will be created in the same directory as the script.
+
+## License
+This project is licensed under the **[MIT license](https://github.com/ot2i7ba/UFEDMapper/blob/main/LICENSE)**, providing users with flexibility and freedom to use and modify the software according to their needs.
+
+## Disclaimer
+This project is provided without warranties. Users are advised to review the accompanying license for more information on the terms of use and limitations of liability.
