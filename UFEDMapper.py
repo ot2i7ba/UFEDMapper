@@ -1,4 +1,4 @@
-# Copyright (c) 2023 ot2i7ba
+# Copyright (c) 2024 ot2i7ba
 # https://github.com/ot2i7ba/
 # This code is licensed under the MIT License (see LICENSE for details).
 
@@ -44,7 +44,7 @@ def clear_screen():
 
 def print_header():
     """Print the header for the script."""
-    print(" UFEDMapper v0.1.0 by ot2i7ba ")
+    print(" UFEDMapper v0.1.1 by ot2i7ba ")
     print("===============================")
     print("")
 
@@ -358,7 +358,6 @@ def export_plot(m, plot_name, prefix, engine):
 
 def get_html_filename(default_name):
     """Prompt the user to input the output HTML filename."""
-    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
     html_file = input(f"Output html filename (enter for '{default_name}'): ")
     
     if not html_file:
