@@ -8,7 +8,6 @@ Processes a KML file to generate an interactive map using Plotly.
 
 import os
 import pandas as pd
-import folium
 from lxml import etree
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
@@ -16,52 +15,229 @@ from tqdm import tqdm
 import logging
 import pytz
 import numpy as np
+import time
+
+# Global Constants
+LOG_FILE = 'UFEDMapper.log'
+DEFAULT_KML_FILE = 'Locations.kml'
 
 # Configure logging
-log_file = 'UFEDMapper.log'
-
 def configure_logging():
     """Configure logging to log to both console and file."""
-    if not os.path.exists(log_file):
+    if not os.path.exists(LOG_FILE):
         try:
-            with open(log_file, 'w') as f:
+            with open(LOG_FILE, 'w') as f:
                 f.write("")
-            print(f"Log file created: {log_file}")
+            print(f"Log file created: {LOG_FILE}")
         except IOError as e:
             print(f"Failed to create log file: {e}")
     
+    console_handler = logging.StreamHandler()
+    file_handler = logging.FileHandler(LOG_FILE)
+    
+    formatter = CustomFormatter('%(asctime)s - %(levelname)s - %(message)s',
+                                datefmt='%Y-%m-%d %H:%M:%S')
+    
+    console_handler.setFormatter(formatter)
+    file_handler.setFormatter(formatter)
+    
     logging.basicConfig(level=logging.INFO,
-                        format='%(asctime)s - %(levelname)s - %(message)s',
-                        handlers=[
-                            logging.FileHandler(log_file),
-                            logging.StreamHandler()
-                        ])
+                        handlers=[file_handler, console_handler])
+    
     logging.info("Logging configured successfully")
 
+class CustomFormatter(logging.Formatter):
+    """Custom formatter to output log messages in a specific format."""
+
+    def format(self, record):
+        log_message = super().format(record)
+        return log_message.replace(" - ", "\n", 1)
+
+# Helper functions
 def clear_screen():
     """Clear the screen depending on the operating system."""
     os.system('cls' if os.name == 'nt' else 'clear')
 
+def print_blank_line():
+    """Print a blank line for better readability."""
+    print("\n")
+
 def print_header():
     """Print the header for the script."""
-    print(" UFEDMapper v0.1.1 by ot2i7ba ")
+    print(" UFEDMapper v0.1.2 by ot2i7ba ")
     print("===============================")
-    print("")
+    print_blank_line()
 
+def clean_html(html_text):
+    """
+    Remove HTML tags from a string.
+
+    Args:
+        html_text (str): The HTML string to clean.
+
+    Returns:
+        str: The cleaned text.
+    """
+    if html_text is None:
+        return None
+    from bs4 import BeautifulSoup
+    soup = BeautifulSoup(html_text, "html.parser")
+    return soup.get_text()
+
+# User interaction functions
 def get_kml_filename():
-    """Prompt the user to input the KML filename."""
-    kml_file = input("Input KML filename (enter for 'Locations.kml'): ")
+    """
+    Prompt the user to input the KML filename or choose from available KML files in the script's directory.
+
+    Returns:
+        str: The selected KML file name.
+    """
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    kml_files = sorted([f for f in os.listdir(script_dir) if f.endswith('.kml')], key=lambda x: x.lower())
     
-    if not kml_file:
-        kml_file = 'Locations.kml'
-    elif not kml_file.endswith('.kml'):
-        kml_file += '.kml'
-    
+    if (kml_files):
+        print("Available KML files:")
+        for idx, file in enumerate(kml_files, 1):
+            print(f"{idx}. {file}")
+        print("e. Exit")
+        print_blank_line()
+        
+        while True:
+            choice = input(f"Enter the number of the desired KML file (Enter to use '{DEFAULT_KML_FILE}' or 'e' to exit): ").strip().lower()
+            if choice == 'e':
+                print("Exiting the script. Goodbye!")
+                logging.info("User chose to exit the script.")
+                exit(0)
+            elif not choice:
+                kml_file = DEFAULT_KML_FILE
+                break
+            else:
+                try:
+                    choice = int(choice)
+                    if 1 <= choice <= len(kml_files):
+                        kml_file = kml_files[choice - 1]
+                        break
+                    else:
+                        raise ValueError
+                except ValueError:
+                    print("Invalid input. Please enter a valid number or 'e' to exit.")
+    else:
+        print("No KML files found in the directory.")
+        kml_file = input(f"Input KML filename (enter for '{DEFAULT_KML_FILE}'): ")
+        print_blank_line()
+        if not kml_file:
+            kml_file = DEFAULT_KML_FILE
+        elif not kml_file.endswith('.kml'):
+            kml_file += '.kml'
+
     logging.info(f"KML file chosen: {kml_file}")
     return kml_file
 
+def get_html_filename(default_name):
+    """
+    Prompt the user to input the output HTML filename.
+
+    Args:
+        default_name (str): The default name for the HTML file.
+
+    Returns:
+        str: The chosen HTML file name.
+    """
+    print_blank_line()
+    html_file = input(f"Output html filename (enter for '{default_name}'): ")
+    print_blank_line()
+
+    if not html_file:
+        html_file = default_name
+    elif not html_file.endswith('.html'):
+        html_file += '.html'
+    logging.info(f"HTML filename chosen: {html_file}")
+    return html_file
+
+def choose_plot_types():
+    """
+    Prompt the user to choose one or more plot types.
+
+    Returns:
+        list: List of chosen plot types.
+    """
+    print_blank_line()
+    print("Choose one or more plot types (e.g., 1,2,5):")
+    plot_types = {
+        "1": "Scatter Plot",
+        "2": "Heatmap",
+        "3": "Lines Plot",
+        "4": "Circle Markers",
+        "5": "Polygon",
+    }
+    for key, value in plot_types.items():
+        print(f"{key}. {value}")
+    
+    print_blank_line()
+    choices = input("Enter the numbers of the plot types: ")
+    chosen_plot_types = [plot_types.get(choice.strip(), "Scatter Plot") for choice in choices.split(',')]
+    logging.info(f"Plot types chosen: {chosen_plot_types}")
+    return chosen_plot_types
+
+def get_date_range(df):
+    """
+    Prompt the user to input a date range.
+
+    Args:
+        df (pd.DataFrame): The DataFrame containing timestamp data.
+
+    Returns:
+        tuple: The start and end dates as datetime objects.
+    """
+    if df['timestamp'].notnull().any():
+        min_date = df['timestamp'].min().strftime("%d.%m.%Y")
+        max_date = df['timestamp'].max().strftime("%d.%m.%Y")
+        print(f"Available date range: {min_date} to {max_date}")
+    
+    def valid_date_input(prompt):
+        while True:
+            date_str = input(prompt)
+            if not date_str:
+                return None
+            try:
+                date = datetime.strptime(date_str, "%d.%m.%Y").replace(tzinfo=pytz.UTC)
+                if date < df['timestamp'].min() or date > df['timestamp'].max():
+                    print(f"Error: Date must be between {min_date} and {max_date}.")
+                else:
+                    return date
+            except ValueError:
+                print("Invalid date format. Please use DD.MM.YYYY.")
+    
+    print_blank_line()
+    start_date = valid_date_input("Enter start date (DD.MM.YYYY) or press Enter to skip: ")
+    end_date = valid_date_input("Enter end date (DD.MM.YYYY) or press Enter to skip: ")
+
+    if start_date and end_date and start_date > end_date:
+        print("Error: Start date cannot be after end date.")
+        return get_date_range(df)
+    
+    if not start_date and end_date:
+        start_date = df['timestamp'].min()
+    if start_date and not end_date:
+        end_date = df['timestamp'].max()
+    
+    return start_date, end_date
+
+# File operations and parsing functions
 def validate_kml_file(kml_file):
-    """Validate if the file exists and is a KML file."""
+    """
+    Validate if the file exists and is a KML file.
+
+    Args:
+        kml_file (str): The KML file name.
+
+    Returns:
+        str: The validated KML file name.
+    
+    Raises:
+        FileNotFoundError: If the file does not exist.
+        ValueError: If the file is not a KML file.
+    """
     if not os.path.isfile(kml_file):
         logging.error(f"Error: The file '{kml_file}' could not be found.")
         raise FileNotFoundError(f"Error: The file '{kml_file}' could not be found.")
@@ -71,17 +247,19 @@ def validate_kml_file(kml_file):
     logging.info(f"Validated KML file: {kml_file}")
     return kml_file
 
-def clean_html(html_text):
-    """Remove HTML tags from a string."""
-    if html_text is None:
-        return None
-    from bs4 import BeautifulSoup
-    soup = BeautifulSoup(html_text, "html.parser")
-    return soup.get_text()
-
 def parse_kml(file_path):
-    """Parse the KML file and extract relevant data using parallel processing."""
+    """
+    Parse the KML file and extract relevant data using parallel processing.
 
+    Args:
+        file_path (str): Path to the KML file.
+
+    Returns:
+        tuple: DataFrame containing the parsed data, count of valid timestamps, count of invalid timestamps.
+    
+    Raises:
+        ValueError: If there is an error parsing the KML file.
+    """
     def process_placemark(elem):
         try:
             placemark_data = {}
@@ -110,7 +288,7 @@ def parse_kml(file_path):
                 placemark_data[key] = value
 
             return placemark_data
-        except Exception as e:
+        except (etree.XMLSyntaxError, AttributeError) as e:
             logging.error(f"Error parsing placemark: {e}")
             return None
 
@@ -137,13 +315,83 @@ def parse_kml(file_path):
         logging.error(f"Error parsing KML file: {e}")
         raise ValueError(f"Error parsing KML file: {e}")
 
+def save_dataframe(df, output_file):
+    """
+    Save the DataFrame to a feather file and export a CSV for user reference.
+
+    Args:
+        df (pd.DataFrame): The DataFrame to save.
+        output_file (str): The output file name.
+    """
+    feather_file = output_file.replace('.csv', '.feather')
+    df.reset_index(drop=True).to_feather(feather_file)
+    df.to_csv(output_file, index=False)
+    logging.info(f"Data saved as {feather_file} and {output_file}")
+    print(f"Data saved as {feather_file} and {output_file}")
+
+def save_dataframe_with_timestamps(df, output_file):
+    """
+    Save the DataFrame with valid timestamps to separate feather and CSV files.
+
+    Args:
+        df (pd.DataFrame): The DataFrame to save.
+        output_file (str): The output file name.
+
+    Returns:
+        tuple: The feather and CSV file names with timestamps.
+    """
+    timestamped_df = df.dropna(subset=['timestamp']).reset_index(drop=True)
+    timestamped_output_file = output_file.replace('.csv', '_timestamps.feather')
+    timestamped_csv_file = output_file.replace('.csv', '_timestamps.csv')
+    timestamped_df.to_feather(timestamped_output_file)
+    timestamped_df.to_csv(timestamped_csv_file, index=False)
+    logging.info(f"Data with timestamps saved as {timestamped_output_file} and {timestamped_csv_file}")
+    print(f"Data with timestamps saved as {timestamped_output_file} and {timestamped_csv_file}")
+    return timestamped_output_file, timestamped_csv_file
+
+def get_output_filename(kml_file, prefix):
+    """
+    Generate the output filename based on the KML filename.
+
+    Args:
+        kml_file (str): The KML file name.
+        prefix (str): The prefix for the output file.
+
+    Returns:
+        str: The generated output file name.
+    """
+    base_name = os.path.splitext(os.path.basename(kml_file))[0]
+    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+    output_file = f"{prefix}_{timestamp}_{base_name}.csv"
+    logging.info(f"Output CSV filename: {output_file}")
+    return output_file
+
+# Data analysis functions
 def filter_by_date(df, start_date, end_date):
-    """Filter the DataFrame by the given date range."""
+    """
+    Filter the DataFrame by the given date range.
+
+    Args:
+        df (pd.DataFrame): The DataFrame to filter.
+        start_date (datetime): The start date for filtering.
+        end_date (datetime): The end date for filtering.
+
+    Returns:
+        pd.DataFrame: The filtered DataFrame.
+    """
     mask = (df['timestamp'] >= start_date) & (df['timestamp'] <= end_date)
     return df.loc[mask]
 
 def analyze_data(df):
-    """Analyze the parsed data and generate insights using numpy for performance."""
+    """
+    Analyze the parsed data and generate insights using numpy for performance.
+
+    Args:
+        df (pd.DataFrame): The DataFrame to analyze.
+
+    Returns:
+        dict: Analysis results including total points, duplicate points, unique points, and top visited locations.
+    """
     total_points = len(df)
     duplicate_points = df.duplicated(subset=['longitude', 'latitude']).sum()
     unique_points = total_points - duplicate_points
@@ -166,7 +414,15 @@ def analyze_data(df):
     }
 
 def save_analysis(analysis, output_file, valid_timestamp_count, invalid_timestamp_count):
-    """Save the analysis to an Excel file."""
+    """
+    Save the analysis to an Excel file.
+
+    Args:
+        analysis (dict): The analysis results.
+        output_file (str): The output file name.
+        valid_timestamp_count (int): The count of valid timestamps.
+        invalid_timestamp_count (int): The count of invalid timestamps.
+    """
     analysis_file = output_file.replace('.csv', '_analysis.xlsx')
     
     with pd.ExcelWriter(analysis_file) as writer:
@@ -184,145 +440,21 @@ def save_analysis(analysis, output_file, valid_timestamp_count, invalid_timestam
     logging.info(f"Analysis saved as {analysis_file}")
     print(f"Analysis saved as {analysis_file}")
 
-def choose_plot_type():
-    """Prompt the user to choose a plot type."""
-    print()
-    print("Choose a plot type:")
-    plot_types = {
-        "1": "Scatter Plot",
-        "2": "Heatmap",
-        "3": "Lines Plot",
-        "4": "Circle Markers",
-        "5": "Polygon",
-        "6": "Arrow Lines",
-        "7": "Cluster Map",
-        "8": "Time Map",
-        "A": "All"
-    }
-    for key, value in plot_types.items():
-        print(f"{key}. {value}")
-    
-    choice = input("Enter the number of the plot type (default is 1): ")
-    plot_type = plot_types.get(choice, "Scatter Plot")
-    logging.info(f"Plot type chosen: {plot_type}")
-    return plot_type
-
-def add_arrow(folium_map, point1, point2):
-    """Add an arrow to the map from point1 to point2."""
-    folium.Marker(
-        location=point2,
-        icon=folium.Icon(icon='arrow-up', angle=0, prefix='fa')
-    ).add_to(folium_map)
-
-def create_heatmap(df, m):
-    from folium.plugins import HeatMap
-    heat_data = [[row['latitude'], row['longitude']] for index, row in df.iterrows()]
-    HeatMap(heat_data).add_to(m)
-
-def create_cluster_map(df, m):
-    from folium.plugins import MarkerCluster
-    marker_cluster = MarkerCluster().add_to(m)
-    for _, row in df.iterrows():
-        popup_text = f"{row['name']}<br>{row['timestamp']}" if pd.notnull(row['timestamp']) else row['name']
-        popup_text += f"<br>{row['description']}" if pd.notnull(row['description']) else ""
-        for col in df.columns:
-            if col not in ['name', 'longitude', 'latitude', 'timestamp', 'description']:
-                popup_text += f"<br>{col}: {row[col]}"
-        folium.Marker(location=[row['latitude'], row['longitude']], popup=popup_text).addTo(marker_cluster)
-
-def create_time_map(df, m):
-    from folium.plugins import TimestampedGeoJson
-    df['timestamp'] = pd.to_datetime(df['timestamp'])
-    features = []
-    for _, row in df.iterrows():
-        if pd.notnull(row['timestamp']):
-            popup_text = f"{row['name']}<br>{row['timestamp']}" if pd.notnull(row['timestamp']) else row['name']
-            popup_text += f"<br>{row['description']}" if pd.notnull(row['description']) else ""
-            for col in df.columns:
-                if col not in ['name', 'longitude', 'latitude', 'timestamp', 'description']:
-                    popup_text += f"<br>{col}: {row[col]}"
-            feature = {
-                'type': 'Feature',
-                'geometry': {
-                    'type': 'Point',
-                    'coordinates': [row['longitude'], row['latitude']],
-                },
-                'properties': {
-                    'time': row['timestamp'].strftime("%Y-%m-%dT%H:%M:%SZ"),
-                    'style': {'color': 'red'},
-                    'icon': 'circle',
-                    'popup': popup_text,
-                }
-            }
-            features.append(feature)
-    TimestampedGeoJson({
-        'type': 'FeatureCollection',
-        'features': features,
-    }, period='PT1H', add_last_point=True).add_to(m)
-
-def create_important_places_map(df, m, important_places):
-    for _, row in df.iterrows():
-        popup_text = f"{row['name']}<br>{row['timestamp']}" if pd.notnull(row['timestamp']) else row['name']
-        popup_text += f"<br>{row['description']}" if pd.notnull(row['description']) else ""
-        for col in df.columns:
-            if col not in ['name', 'longitude', 'latitude', 'timestamp', 'description']:
-                popup_text += f"<br>{col}: {row[col]}"
-        if row['name'] in important_places:
-            folium.Marker(
-                location=[row['latitude'], row['longitude']],
-                popup=popup_text,
-                icon=folium.Icon(color='red', icon='info-sign')
-            ).add_to(m)
-        else:
-            folium.Marker(location=[row['latitude'], row['longitude']], popup=popup_text).add_to(m)
-
-def create_folium_map(df, plot_type, important_places=None):
-    """Create the appropriate plot based on the plot type selected using Folium."""
-    m = folium.Map(location=[df['latitude'].mean(), df['longitude'].mean()], zoom_start=12)
-
-    if plot_type == "Scatter Plot":
-        for _, row in df.iterrows():
-            popup_text = f"{row['name']}<br>{row['timestamp']}" if pd.notnull(row['timestamp']) else row['name']
-            popup_text += f"<br>{row['description']}" if pd.notnull(row['description']) else ""
-            for col in df.columns:
-                if col not in ['name', 'longitude', 'latitude', 'timestamp', 'description']:
-                    popup_text += f"<br>{col}: {row[col]}"
-            folium.Marker(location=[row['latitude'], row['longitude']], popup=popup_text).add_to(m)
-    elif plot_type == "Heatmap":
-        create_heatmap(df, m)
-    elif plot_type == "Lines Plot":
-        points = [(row['latitude'], row['longitude']) for _, row in df.iterrows()]
-        folium.PolyLine(points, color="blue", weight=2.5, opacity=1).add_to(m)
-    elif plot_type == "Circle Markers":
-        for _, row in df.iterrows():
-            popup_text = f"{row['name']}<br>{row['timestamp']}" if pd.notnull(row['timestamp']) else row['name']
-            popup_text += f"<br>{row['description']}" if pd.notnull(row['description']) else ""
-            for col in df.columns:
-                if col not in ['name', 'longitude', 'latitude', 'timestamp', 'description']:
-                    popup_text += f"<br>{col}: {row[col]}"
-            folium.CircleMarker(location=[row['latitude'], row['longitude']], radius=5, color='blue', fill=True, fill_color='blue', popup=popup_text).add_to(m)
-    elif plot_type == "Polygon":
-        points = [(row['latitude'], row['longitude']) for _, row in df.iterrows()]
-        folium.Polygon(locations=points, color="blue", fill=True, fill_color="blue").add_to(m)
-    elif plot_type == "Arrow Lines":
-        points = [(row['latitude'], row['longitude']) for _, row in df.iterrows()]
-        folium.PolyLine(points, color="blue", weight=2.5, opacity=1).add_to(m)
-        for i in range(len(points) - 1):
-            add_arrow(m, points[i], points[i + 1])
-    elif plot_type == "Cluster Map":
-        create_cluster_map(df, m)
-    elif plot_type == "Time Map":
-        create_time_map(df, m)
-    elif plot_type == "Important Places" and important_places:
-        create_important_places_map(df, m, important_places)
-    else:
-        raise ValueError(f"Unknown plot type: {plot_type}")
-
-    logging.info(f"Map created: {plot_type}")
-    return m
-
+# Plot creation functions
 def create_plotly_map(df, plot_type):
-    """Create the appropriate plot based on the plot type selected using Plotly."""
+    """
+    Create the appropriate plot based on the plot type selected using Plotly.
+
+    Args:
+        df (pd.DataFrame): The DataFrame to plot.
+        plot_type (str): The type of plot to create.
+
+    Returns:
+        plotly.graph_objects.Figure: The created plot.
+
+    Raises:
+        ValueError: If an unknown plot type is specified.
+    """
     import plotly.express as px  # Lazy Load Plotly inside the function
     
     hover_data = {col: True for col in df.columns if col not in ['name', 'longitude', 'latitude']}
@@ -343,184 +475,115 @@ def create_plotly_map(df, plot_type):
     logging.info(f"Map created: {plot_type}")
     return fig
 
-def export_plot(m, plot_name, prefix, engine):
-    """Export the plot to an HTML file."""
+def export_plot(m, plot_name, prefix):
+    """
+    Export the plot to an HTML file.
+
+    Args:
+        m (plotly.graph_objects.Figure): The plot to export.
+        plot_name (str): The name of the plot.
+        prefix (str): The prefix for the output file name.
+    """
     timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
     html_file = f"{prefix}_{timestamp}_{plot_name}.html"
-    
-    if engine == 'folium':
-        m.save(html_file)
-    elif engine == 'plotly':
-        m.write_html(html_file)
-    
+    m.write_html(html_file)
     logging.info(f"Plot saved as {html_file}")
     print(f"Plot saved as {html_file}")
 
-def get_html_filename(default_name):
-    """Prompt the user to input the output HTML filename."""
-    html_file = input(f"Output html filename (enter for '{default_name}'): ")
-    
-    if not html_file:
-        html_file = default_name
-    elif not html_file.endswith('.html'):
-        html_file += '.html'
-    logging.info(f"HTML filename chosen: {html_file}")
-    return html_file
+def export_all_plots(df, prefix):
+    """
+    Export all plot types using parallel processing.
 
-def export_all_plots(df, prefix, important_places=None, engine='plotly'):
-    """Export all plot types using parallel processing."""
+    Args:
+        df (pd.DataFrame): The DataFrame to plot.
+        prefix (str): The prefix for the output file names.
+    """
     plot_types = ["Scatter Plot", "Heatmap", "Lines Plot", "Circle Markers", "Polygon"]
     with ThreadPoolExecutor() as executor:
-        futures = {}
-        if engine == 'folium':
-            for plot_type in plot_types:
-                futures[executor.submit(create_folium_map, df, plot_type, important_places)] = plot_type.lower().replace(" ", "_")
-        elif engine == 'plotly':
-            for plot_type in plot_types:
-                futures[executor.submit(create_plotly_map, df, plot_type)] = plot_type.lower().replace(" ", "_")
+        futures = {executor.submit(create_plotly_map, df, plot_type): plot_type.lower().replace(" ", "_") for plot_type in plot_types}
         for future in tqdm(as_completed(futures), total=len(futures), desc="Exporting plots", unit=" plot"):
             plot_name = futures[future]
             try:
                 m = future.result()
-                export_plot(m, plot_name, prefix, engine)
-            except Exception as e:
+                export_plot(m, plot_name, prefix)
+            except ValueError as e:
                 logging.error(f"Error creating plot {plot_name}: {e}")
 
-def get_output_filename(kml_file, prefix):
-    """Generate the output filename based on the KML filename."""
-    base_name = os.path.splitext(os.path.basename(kml_file))[0]
-    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-    output_file = f"{prefix}_{timestamp}_{base_name}.csv"
-    logging.info(f"Output CSV filename: {output_file}")
-    return output_file
+# Main function
+def display_countdown(seconds):
+    """
+    Display a countdown timer in the console.
 
-def save_dataframe(df, output_file):
-    """Save the DataFrame to a feather file."""
-    feather_file = output_file.replace('.csv', '.feather')
-    df.reset_index(drop=True).to_feather(feather_file)
-    logging.info(f"Data saved as {feather_file}")
-    print(f"Data saved as {feather_file}")
-
-def save_dataframe_with_timestamps(df, output_file):
-    """Save the DataFrame with valid timestamps to a separate feather file."""
-    timestamped_df = df.dropna(subset=['timestamp']).reset_index(drop=True)
-    timestamped_output_file = output_file.replace('.csv', '_timestamps.feather')
-    timestamped_df.to_feather(timestamped_output_file)
-    logging.info(f"Data with timestamps saved as {timestamped_output_file}")
-    print(f"Data with timestamps saved as {timestamped_output_file}")
-    return timestamped_output_file
-
-def choose_engine():
-    """Prompt the user to choose the plotting engine."""
-    print()
-    print("Choose the plotting engine (default is Plotly):")
-    print("p. Plotly")
-    print("f. Folium")
-    engine = input("Enter the engine (p/f): ").strip().lower()
-    if engine not in ['p', 'f']:
-        engine = 'p'
-    logging.info(f"Engine chosen: {engine}")
-    return 'plotly' if engine == 'p' else 'folium'
-
-def get_date_range(df):
-    """Prompt the user to input a date range."""
-    if df['timestamp'].notnull().any():
-        min_date = df['timestamp'].min().strftime("%d.%m.%Y")
-        max_date = df['timestamp'].max().strftime("%d.%m.%Y")
-        print(f"Available date range: {min_date} to {max_date}")
-    
-    def valid_date_input(prompt):
-        while True:
-            date_str = input(prompt)
-            if not date_str:
-                return None
-            try:
-                date = datetime.strptime(date_str, "%d.%m.%Y").replace(tzinfo=pytz.UTC)
-                if date < df['timestamp'].min() or date > df['timestamp'].max():
-                    print(f"Error: Date must be between {min_date} and {max_date}.")
-                else:
-                    return date
-            except ValueError:
-                print("Invalid date format. Please use DD.MM.YYYY.")
-    
-    start_date = valid_date_input("Enter start date (DD.MM.YYYY) or press Enter to skip: ")
-    end_date = valid_date_input("Enter end date (DD.MM.YYYY) or press Enter to skip: ")
-
-    if start_date and end_date and start_date > end_date:
-        print("Error: Start date cannot be after end date.")
-        return get_date_range(df)
-    
-    if not start_date and end_date:
-        start_date = df['timestamp'].min()
-    if start_date and not end_date:
-        end_date = df['timestamp'].max()
-    
-    return start_date, end_date
+    Args:
+        seconds (int): The number of seconds for the countdown.
+    """
+    print_blank_line()
+    for remaining in range(seconds, 0, -1):
+        print(f"\rReturning to main menu in {remaining} seconds...", end="")
+        time.sleep(1)
+    print("\rReturning to main menu...                     ")
 
 def main():
     """Main function to execute the script workflow."""
-    configure_logging()
-    clear_screen()
-    print_header()
+    while True:
+        configure_logging()
+        clear_screen()
+        print_header()
 
-    try:
-        kml_file = get_kml_filename()
-        validate_kml_file(kml_file)
-        
-        df, valid_timestamp_count, invalid_timestamp_count = parse_kml(kml_file)
-        
-        prefix = input("Enter a prefix for the output files (optional): ")
-        if not prefix:
-            prefix = "output"
+        try:
+            kml_file = get_kml_filename()
+            validate_kml_file(kml_file)
+            
+            df, valid_timestamp_count, invalid_timestamp_count = parse_kml(kml_file)
+            
+            print_blank_line()
+            prefix = input("Enter a prefix for the output files (optional): ")
+            print_blank_line()
 
-        output_file = get_output_filename(kml_file, prefix)
-        save_dataframe(df, output_file)
-        timestamped_output_file = save_dataframe_with_timestamps(df, output_file)
+            if not prefix:
+                prefix = "output"
 
-        # Perform and save analysis
-        analysis = analyze_data(df)
-        save_analysis(analysis, output_file, valid_timestamp_count, invalid_timestamp_count)
-        
-        start_date, end_date = get_date_range(df)
-        if start_date and end_date:
-            df = pd.read_feather(timestamped_output_file)
-            df['timestamp'] = pd.to_datetime(df['timestamp'])
-            df = filter_by_date(df, start_date, end_date)
+            output_file = get_output_filename(kml_file, prefix)
+            save_dataframe(df, output_file)
+            timestamped_output_file, timestamped_csv_file = save_dataframe_with_timestamps(df, output_file)
 
-        engine = choose_engine()
-        plot_type = choose_plot_type()
-        
-        if plot_type == "All":
-            important_places = ['Important Place 1', 'Important Place 2']  # Hier kannst du wichtige Orte definieren
-            export_all_plots(df, prefix, important_places, engine)
-        else:
-            important_places = None
-            if plot_type == "Important Places":
-                important_places = ['Important Place 1', 'Important Place 2']  # Hier kannst du wichtige Orte definieren
-            if engine == 'plotly':
+            # Perform and save analysis
+            analysis = analyze_data(df)
+            save_analysis(analysis, output_file, valid_timestamp_count, invalid_timestamp_count)
+            
+            start_date, end_date = get_date_range(df)
+            if start_date and end_date:
+                df = pd.read_feather(timestamped_output_file)
+                df['timestamp'] = pd.to_datetime(df['timestamp'])
+                df = filter_by_date(df, start_date, end_date)
+                filtered_output_file = output_file.replace('.csv', '_filtered.csv')
+                df.to_csv(filtered_output_file, index=False)
+                logging.info(f"Filtered data saved as {filtered_output_file}")
+                print(f"Filtered data saved as {filtered_output_file}")
+
+            plot_types = choose_plot_types()
+            
+            for plot_type in plot_types:
                 m = create_plotly_map(df, plot_type)
                 plot_name = plot_type.lower().replace(" ", "_")
                 html_file = get_html_filename(f"{prefix}_{plot_name}.html")
-                m.write_html(html_file)
-            else:
-                m = create_folium_map(df, plot_type, important_places)
-                plot_name = plot_type.lower().replace(" ", "_")
-                html_file = get_html_filename(f"{prefix}_{plot_name}.html")
-                m.save(html_file)
-            
-            logging.info(f"Plot saved as {html_file}")
+                export_plot(m, plot_name, prefix)
+                
+            # Delete the feather files if no longer needed
+            if os.path.exists(output_file.replace('.csv', '.feather')):
+                os.remove(output_file.replace('.csv', '.feather'))
+                logging.info(f"Feather file {output_file.replace('.csv', '.feather')} deleted")
+            if os.path.exists(timestamped_output_file):
+                os.remove(timestamped_output_file)
+                logging.info(f"Timestamped feather file {timestamped_output_file} deleted")
 
-        # Delete the feather files if no longer needed
-        if os.path.exists(output_file.replace('.csv', '.feather')):
-            os.remove(output_file.replace('.csv', '.feather'))
-            logging.info(f"Feather file {output_file.replace('.csv', '.feather')} deleted")
-        if os.path.exists(timestamped_output_file):
-            os.remove(timestamped_output_file)
-            logging.info(f"Timestamped feather file {timestamped_output_file} deleted")
+            # Visualize a 3-second countdown before clearing the screen
+            display_countdown(3)
+            clear_screen()
 
-    except (FileNotFoundError, ValueError) as e:
-        logging.error(e)
-        print(e)
+        except (FileNotFoundError, ValueError) as e:
+            logging.error(e)
+            print(e)
 
 if __name__ == "__main__":
     main()
