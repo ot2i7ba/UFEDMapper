@@ -8,6 +8,7 @@ UFEDMapper is a Python script designed to process and analyze KML files exported
    - [Usage](#usage)
    - [PyInstaller](#pyinstaller)
    - [Releases](#releases)
+- [Notes](#notes)
 - [Example](#example)
    - [Screenshots](#screenshots)
 - [Changes](#changes)
@@ -113,6 +114,10 @@ Alternatively, you can use the provided UFEDMapper.spec file to compile the scri
 
 ## Releases
 A compiled and 7zip-packed version of UFEDMapper for Windows is available as a release. You can download it from the **[Releases](https://github.com/ot2i7ba/UFEDMapper/releases)** section on GitHub. This version includes all necessary dependencies and can be run without requiring Python to be installed on your system.
+
+# Notes
+> [!IMPORTANT]
+> An internet connection is required to display the maps in the generated HTML files. This is because the maps are rendered using Plotly, which relies on online resources to load the map tiles and other visualization components. Rest assured, no information from your local system is sent to Plotly during this process. The map data is sourced from OpenStreetMap, ensuring compliance with GDPR regulations.
 
 # Example
 
