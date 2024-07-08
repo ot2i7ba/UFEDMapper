@@ -1,5 +1,5 @@
 # UFEDMapper
-UFEDMapper is a Python script designed to process and analyze KML files exported from Cellebrite UFED. It provides the functionality to create various types of map visualizations from the extracted data points. This script is based on **[UFEDkml2map](https://github.com/ot2i7ba/UFEDkml2map/)**, and I primarily use these scripts for professional purposes as they work well for me. I hope that by sharing this, it may help others too.
+UFEDMapper is a Python script crafted to process and visualize KML files exported from Cellebrite UFED [^1] using Plotly [^2]. This tool generates various types of interactive map visualizations from the extracted data points. Based on **[UFEDkml2map](https://github.com/ot2i7ba/UFEDkml2map/)**, this script has been tailored to meet my professional needs, helping me streamline my workflow. By sharing this, I hope it can also be beneficial to others in similar fields.
 
 ## Table of Contents
 - [Features](#features)
@@ -8,7 +8,6 @@ UFEDMapper is a Python script designed to process and analyze KML files exported
    - [Usage](#usage)
    - [PyInstaller](#pyinstaller)
    - [Releases](#releases)
-- [Notes](#notes)
 - [Example](#example)
    - [Screenshots](#screenshots)
 - [Changes](#changes)
@@ -115,9 +114,8 @@ Alternatively, you can use the provided UFEDMapper.spec file to compile the scri
 ## Releases
 A compiled and 7zip-packed version of UFEDMapper for Windows is available as a release. You can download it from the **[Releases](https://github.com/ot2i7ba/UFEDMapper/releases)** section on GitHub. This version includes all necessary dependencies and can be run without requiring Python to be installed on your system.
 
-# Notes
 > [!IMPORTANT]
-> An internet connection is required to display the maps in the generated HTML files. This is because the maps are rendered using Plotly, which relies on online resources to load the map tiles and other visualization components. Rest assured, no information from your local system is sent to Plotly during this process. The map data is sourced from OpenStreetMap, ensuring compliance with GDPR regulations.
+> An internet connection is required to display the maps in the generated HTML files. This is because the maps are rendered using Plotly, which relies on online resources to load the map tiles and other visualization components. Rest assured, no information from your local system is sent to Plotly during this process. The map data is sourced from OpenStreetMap [^3], ensuring compliance with GDPR regulations.
 
 # Example
 
@@ -214,8 +212,10 @@ This project is provided without warranties. Users are advised to review the acc
 
 ___
 
-## Acknowledgements
-Thanks to the Plotly team for their excellent visualization library, which made creating interactive maps a breeze.
+## Conclusion
+This script has been tailored to fit my specific professional needs, and while it may seem like a small tool, it has a significant impact on my workflow. By automating the visualization of KML files from Cellebrite UFED, UFEDMapper saves me time and effort, allowing me to focus on more critical tasks. Greetings to my dear colleagues [^4] who avoid scripts like the plague and think that consoles and Bash are some sort of dark magic – the [compiled](https://github.com/ot2i7ba/UFEDMapper/releases) version will spare you the console kung-fu and hopefully be a helpful tool for you as well. 😉
 
-#### Greetings
-PPHA-IuK
+[^1]: [Cellebrite UFED](https://cellebrite.com/) (Universal Forensic Extraction Device) is a forensic tool to extract and analyze data from mobile devices.
+[^2]: Thanks to the [Plotly](https://plotly.com/python/) team for their excellent visualization library, which made creating interactive maps a breeze.
+[^3]: OpenStreetMap is a collaborative mapping project that provides freely accessible map data. OSM complies with GDPR by not collecting personal data during map tile loading.
+[^4]: Greetings to PPHA-IuK.
