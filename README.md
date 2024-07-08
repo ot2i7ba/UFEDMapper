@@ -210,9 +210,7 @@ Contributions are welcome! Please fork the repository and submit a pull request 
 # Disclaimer
 This project is provided without warranties. Users are advised to review the accompanying license for more information on the terms of use and limitations of liability.
 
-___
-
-## Conclusion
+# Conclusion
 This script has been tailored to fit my specific professional needs, and while it may seem like a small tool, it has a significant impact on my workflow. By automating the visualization of KML files from Cellebrite UFED, UFEDMapper saves me time and effort, allowing me to focus on more critical tasks. Greetings to my dear colleagues [^4] who avoid scripts like the plague and think that consoles and Bash are some sort of dark magic – the [compiled](https://github.com/ot2i7ba/UFEDMapper/releases) version will spare you the console kung-fu and hopefully be a helpful tool for you as well. 😉
 
 [^1]: [Cellebrite UFED](https://cellebrite.com/) (Universal Forensic Extraction Device) is a forensic tool to extract and analyze data from mobile devices.
