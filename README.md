@@ -198,3 +198,6 @@ Contributions are welcome! Please fork the repository and submit a pull request 
 
 # Disclaimer
 This project is provided without warranties. Users are advised to review the accompanying license for more information on the terms of use and limitations of liability.
+
+#### Greetings
+PPHA IuK
