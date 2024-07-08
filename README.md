@@ -5,10 +5,11 @@ UFEDMapper is a Python script designed to process and analyze KML files exported
 - [Features](#features)
 - [Requirements](#requirements)
 - [Installation](#installation)
-- [Usage](#usage)
-- [PyInstaller](#pyinstaller)
-- [Releases](#releases)
+   - [Usage](#usage)
+   - [PyInstaller](#pyinstaller)
+   - [Releases](#releases)
 - [Example](#example)
+- [Screenshots](#screenshots)
 - [Changes](#changes)
 - [License](#license)
 
@@ -148,6 +149,32 @@ Choose one or more plot types (e.g., 1,2,5):
 # Logging
 The log file UFEDMapper.log will be created in the same directory as the script.
 
+# Screenshots
+
+<div style="display: flex; flex-wrap: wrap;">
+    <div style="flex: 1; min-width: 300px; padding: 10px;">
+        <img src="assets/ufedmapper_1_main_menu.png" alt="UFEDMapper main menu" style="width: 100%;"/>
+    </div>
+    <div style="flex: 1; min-width: 300px; padding: 10px;">
+        <img src="assets/ufedmapper_2_pick_prefix.png" alt="UFEDMapper pick prefix" style="width: 100%;"/>
+    </div>
+    <div style="flex: 1; min-width: 300px; padding: 10px;">
+        <img src="assets/ufedmapper_3_pick_period.png" alt="UFEDMapper pick period" style="width: 100%;"/>
+    </div>
+    <div style="flex: 1; min-width: 300px; padding: 10px;">
+        <img src="assets/ufedmapper_4_pick_plots.png" alt="UFEDMapper pick plots" style="width: 100%;"/>
+    </div>
+    <div style="flex: 1; min-width: 300px; padding: 10px;">
+        <img src="assets/ufedmapper_5_pick_filename.png" alt="UFEDMapper pick filename" style="width: 100%;"/>
+    </div>
+    <div style="flex: 1; min-width: 300px; padding: 10px;">
+        <img src="assets/plotly_generated_heatmap.png" alt="Plotly generated heatmap" style="width: 100%;"/>
+    </div>
+    <div style="flex: 1; min-width: 300px; padding: 10px;">
+        <img src="assets/plotly_generated_scatter.png" alt="Plotly generated scatter" style="width: 100%;"/>
+    </div>
+</div>
+
 ___
 
 # Changes
@@ -199,5 +226,10 @@ Contributions are welcome! Please fork the repository and submit a pull request 
 # Disclaimer
 This project is provided without warranties. Users are advised to review the accompanying license for more information on the terms of use and limitations of liability.
 
+___
+
+## Acknowledgements
+Thanks to the Plotly team for their excellent visualization library, which made creating interactive maps a breeze.
+
 #### Greetings
-PPHA IuK
+PPHA-IuK
