@@ -215,5 +215,5 @@ This script has been tailored to fit my specific professional needs, and while i
 
 [^1]: [Cellebrite UFED](https://cellebrite.com/) (Universal Forensic Extraction Device) is a forensic tool to extract and analyze data from mobile devices.
 [^2]: Thanks to the [Plotly](https://plotly.com/python/) team for their excellent visualization library, which made creating interactive maps a breeze.
-[^3]: OpenStreetMap is a collaborative mapping project that provides freely accessible map data. OSM complies with GDPR by not collecting personal data during map tile loading.
+[^3]: [OpenStreetMap](https://www.openstreetmap.org/) is a collaborative mapping project that provides freely accessible map data. OSM complies with GDPR by not collecting personal data during map tile loading.
 [^4]: Greetings to PPHA-IuK.
