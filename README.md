@@ -152,9 +152,9 @@ The log file UFEDMapper.log will be created in the same directory as the script.
 # Screenshots
 <img src="https://github.com/ot2i7ba/UFEDMapper/blob/main/assets/ufedmapper_1_main_menu.png" width="32%" alt="UFEDMapper main menu"> <img src="https://github.com/ot2i7ba/UFEDMapper/blob/main/assets/ufedmapper_2_pick_prefix.png" width="32%" alt="UFEDMapper pick prefix"> <img src="https://github.com/ot2i7ba/UFEDMapper/blob/main/assets/ufedmapper_3_pick_period.png" width="32%" alt="UFEDMapper pick period"> 
 
-<img src="https://github.com/ot2i7ba/UFEDMapper/blob/main/assets/assets/ufedmapper_4_pick_plots.png" width="32%" alt="UFEDMapper pick plots"> <img src="https://github.com/ot2i7ba/UFEDMapper/blob/main/assets/ufedmapper_5_pick_filename.png" width="32%" alt="UFEDMapper pick filename"> <img src="https://github.com/ot2i7ba/UFEDMapper/blob/main/assets/plotly_generated_heatmap.png" width="32%" alt="Plotly generated heatmap"> 
+<img src="https://github.com/ot2i7ba/UFEDMapper/blob/main/assets/ufedmapper_4_pick_plots.png" width="32%" alt="UFEDMapper pick plots"> <img src="https://github.com/ot2i7ba/UFEDMapper/blob/main/assets/ufedmapper_5_pick_filename.png" width="32%" alt="UFEDMapper pick filename"> <img src="https://github.com/ot2i7ba/UFEDMapper/blob/main/assets/plotly_generated_heatmap.png" width="32%" alt="Plotly generated heatmap"> 
 
-<img src="https://github.com/ot2i7ba/UFEDMapper/blob/main/assets/assets/plotly_generated_scatter.png" width="32%" alt="Plotly generated scatter"> 
+<img src="https://github.com/ot2i7ba/UFEDMapper/blob/main/assets/plotly_generated_scatter.png" width="32%" alt="Plotly generated scatter"> 
 
 ___
 
