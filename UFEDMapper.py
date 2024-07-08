@@ -7,15 +7,17 @@ Processes a KML file to generate an interactive map using Plotly.
 """
 
 import os
+import sys
+import time
+import logging
+from datetime import datetime
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
 import pandas as pd
 from lxml import etree
-from concurrent.futures import ThreadPoolExecutor, as_completed
-from datetime import datetime
 from tqdm import tqdm
-import logging
 import pytz
 import numpy as np
-import time
 
 # Global Constants
 LOG_FILE = 'UFEDMapper.log'
@@ -64,7 +66,7 @@ def print_blank_line():
 
 def print_header():
     """Print the header for the script."""
-    print(" UFEDMapper v0.1.2 by ot2i7ba ")
+    print(" UFEDMapper v0.1.3 by ot2i7ba ")
     print("===============================")
     print_blank_line()
 
@@ -92,9 +94,9 @@ def get_kml_filename():
     Returns:
         str: The selected KML file name.
     """
-    script_dir = os.path.dirname(os.path.abspath(__file__))
+    script_dir = os.path.dirname(os.path.abspath(sys.executable if getattr(sys, 'frozen', False) else __file__))
     kml_files = sorted([f for f in os.listdir(script_dir) if f.endswith('.kml')], key=lambda x: x.lower())
-    
+
     if (kml_files):
         print("Available KML files:")
         for idx, file in enumerate(kml_files, 1):
@@ -107,7 +109,7 @@ def get_kml_filename():
             if choice == 'e':
                 print("Exiting the script. Goodbye!")
                 logging.info("User chose to exit the script.")
-                exit(0)
+                sys.exit(0)
             elif not choice:
                 kml_file = DEFAULT_KML_FILE
                 break
