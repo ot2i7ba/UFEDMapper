@@ -93,7 +93,7 @@ To compile the UFEDMapper script into a standalone executable, you can use PyIns
 
 - `--onefile`: Create a single executable file.
 - `--name UFEDMapper`: Name the executable UFEDMapper.
-- `--icon=myicon.ico`: Use myicon.ico as the icon for the executable.
+- `--icon=ufedmapper.ico`: Use ufedmapper.ico as the icon for the executable.
 - `--hidden-import pyarrow`: Ensure that the pyarrow module is included.
 - `--hidden-import pyarrow.vendored.version`: Ensure that the pyarrow.vendored.version module is included.
 
