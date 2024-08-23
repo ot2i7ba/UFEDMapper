@@ -1,6 +1,11 @@
 # UFEDMapper
 UFEDMapper is a Python script crafted to process and visualize KML files exported from Cellebrite UFED [^1] using Plotly [^2]. This tool generates various types of interactive map visualizations from the extracted data points. Based on [UFEDkml2map](https://github.com/ot2i7ba/UFEDkml2map/), this script has been tailored to meet my professional needs, helping me streamline my workflow. By sharing this, I hope it can also be beneficial to others in similar fields.
 
+
+> [!NOTE]
+> This script is specifically used to work with KML files exported from Cellebrite UFED. I have not tested it with other KML files, and therefore cannot guarantee its compatibility or performance with KML files from other sources.
+
+
 ## Table of Contents
 - [Features](#features)
 - [Requirements](#requirements)
