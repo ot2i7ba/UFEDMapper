@@ -7,6 +7,9 @@ UFEDMapper is a Python script crafted to process and visualize KML files exporte
 > [!CAUTION]
 Please note that this script is currently under development, and I cannot provide a 100% guarantee that it operates in a forensically sound manner. It is tailored to meet specific needs at this stage. Use it with caution, especially in environments where forensic integrity is critical.
 
+> [!CAUTION]
+> This project is based on the original repository by [ot2i7ba](https://github.com/ot2i7ba).
+
 ## Table of Contents
 - [Features](#features)
 - [Requirements](#requirements)
@@ -223,3 +226,4 @@ This script has been tailored to fit my specific professional needs, and while i
 [^2]: Thanks to the [Plotly](https://plotly.com/python/) team for their excellent visualization library, which made creating interactive maps a breeze.
 [^3]: [OpenStreetMap](https://www.openstreetmap.org/) is a collaborative mapping project that provides freely accessible map data.
 [^4]: Greetings to PPHA-IuK.
+
