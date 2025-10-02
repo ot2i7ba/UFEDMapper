@@ -210,6 +210,9 @@ ___
 
 ___
 
+> [!CAUTION]
+> This project is based on the original repository by [ot2i7ba](https://github.com/ot2i7ba).
+
 # License
 This project is licensed under the **[MIT license](https://github.com/ot2i7ba/UFEDMapper/blob/main/LICENSE)**, providing users with flexibility and freedom to use and modify the software according to their needs.
 
@@ -226,5 +229,3 @@ This script has been tailored to fit my specific professional needs, and while i
 [^2]: Thanks to the [Plotly](https://plotly.com/python/) team for their excellent visualization library, which made creating interactive maps a breeze.
 [^3]: [OpenStreetMap](https://www.openstreetmap.org/) is a collaborative mapping project that provides freely accessible map data.
 [^4]: Greetings to PPHA-IuK.
-
-
